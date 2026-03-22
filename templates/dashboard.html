@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div style="grid-column: span 2; margin-bottom: 10px;">
+    <a href="/dashboard" style="text-decoration: none; color: var(--primary); font-weight: bold;"> ← Back to Portal</a>
+</div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4>Latest Glucose</h4>
+                <div class="value">{{ history[0].glucose if history else '--' }} mg/dL</div>
+            </div>
+            <div class="stat-card" style="border-left-color: #1cc88a;">
+                <h4>Last Risk Score</h4>
+                <div class="value">{{ history[0].score if history else '--' }}%</div>
+            </div>
+            <div class="stat-card" style="border-left-color: #f6c23e;">
+                <h4>User Profile</h4>
+                <div class="value" style="font-size: 16px;">{{ name }}</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Assessment History</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>DATE</th>
+                        <th>GLUCOSE</th>
+                        <th>RESULT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in history %}
+                    <tr>
+                        <td>{{ row.date.split(' ')[0] }}</td>
+                        <td>{{ row.glucose }}</td>
+                        <td>
+                            <span class="badge {{ 'badge-danger' if 'Positive' in row.result else 'badge-success' }}">
+                                {{ 'High Risk' if 'Positive' in row.result else 'Healthy' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>AI Health Analysis</h3>
+            
+            {% if prediction %}
+                <div style="text-align: center; background: #f8f9fc; padding: 20px; border-radius: 10px;">
+                    <p style="margin:0; font-size: 13px; color: #b7b9cc;">Current Assessment</p>
+                    <h2 style="margin: 10px 0;" class="{{ 'text-risk' if 'Positive' in prediction else 'text-healthy' }}">
+                     {{ prediction }}
+                    </h2>
+                    <div style="background: white; padding: 10px; border-radius: 8px;">
+                        <img src="{{ explanation_chart }}" style="width: 100%;">
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button onclick="window.print()" class="btn-submit" style="width: auto; padding: 10px 30px;">Download Report</button>
+                        <a href="/dashboard" style="display:block; margin-top: 10px; font-size: 12px; color: #4e73df; text-decoration: none;">Perform New Scan</a>
+                    </div>
+                </div>
+            {% else %}
+                <form action="/predict" method="POST" class="diagnostic-form">
+                    <div class="input-group">
+                        <label>Age</label>
+                        <input type="number" name="Age" required placeholder="Years">
+                    </div>
+                    <div class="input-group">
+                        <label>Weight (kg)</label>
+                        <input type="number" step="0.1" name="weight" required placeholder="e.g. 70">
+                    </div>
+                    <div class="input-group">
+                        <label>Height (cm)</label>
+                        <input type="number" step="0.1" name="height" required placeholder="e.g. 175">
+                    </div>
+                    <div class="input-group">
+                        <label>Glucose</label>
+                        <input type="number" name="Glucose" required placeholder="mg/dL">
+                    </div>
+                    <div class="input-group">
+                        <label>Blood Pressure</label>
+                        <input type="number" name="BloodPressure" required placeholder="mm Hg">
+                    </div>
+                   
+                    <div class="input-group">
+                      <label>Family Diabetes History</label>
+                      <select name="DiabetesPedigreeFunction">
+                         <option value="0.15">No family history (Low Risk)</option>
+                         <option value="0.35">Grandparent or Aunt/Uncle (Moderate)</option>
+                         <option value="0.65">One Parent or Sibling (High Risk)</option>
+                         <option value="1.20">Both Parents or Multiple Siblings (Very High)</option>
+                         <option value="2.00">Extensive History (Extreme Risk)</option>
+                     </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Smoking History</label>
+                        <select name="smoking_history">
+                            <option value="0">Never</option>
+                            <option value="2">Current</option>
+                            <option value="3">Former</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-submit">Run AI Diagnostic</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

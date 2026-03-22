@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hypertension Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div style="grid-column: span 2; margin-bottom: 10px;">
+            <a href="/dashboard" style="text-decoration: none; color: var(--primary); font-weight: bold;"> ← Back to Portal</a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4>Last Risk Score</h4>
+                <div class="value">{{ history[0][1] if history else '--' }}%</div>
+            </div>
+            <div class="stat-card" style="border-left-color: #f6c23e;">
+                <h4>Patient Profile</h4>
+                <div class="value" style="font-size: 16px;">{{ name }}</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Hypertension Assessment History</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>DATE</th>
+                        <th>SALT</th>
+                        <th>RISK %</th>
+                        <th>STATUS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in history %}
+                    <tr>
+                        <td>{{ row[0].split(' ')[0] }}</td>
+                        <td>{{ row[3] }}/10</td>
+                        <td>{{ row[1] }}%</td>
+                        <td>
+                            <span class="badge {{ 'badge-danger' if 'Positive' in row[2] else 'badge-success' }}">
+                                {{ 'High Risk' if 'Positive' in row[2] else 'Healthy' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Hypertension AI Diagnostic</h3>
+            
+            {% if prediction %}
+                <div style="text-align: center; background: #f8f9fc; padding: 20px; border-radius: 10px;">
+                    <p style="margin:0; font-size: 13px; color: #b7b9cc;">Current Assessment</p>
+                    
+                    <h2 style="margin: 10px 0;" class="{{ 'text-risk-red' if 'Positive' in prediction else 'text-healthy-green' }}">
+                        {{ prediction }}
+                    </h2>
+
+                    <div style="background: white; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
+                        <img src="{{ explanation_chart }}" alt="AI Analysis Chart" style="width: 100%; border-radius: 5px;">
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <button onclick="window.print()" class="btn-submit" style="width: auto; padding: 10px 30px;">Download Report</button>
+                        <a href="/hypertension" style="display:block; margin-top: 15px; font-size: 12px; color: #4e73df; text-decoration: none;">Perform New Scan</a>
+                    </div>
+                </div>
+            {% else %}
+                <form action="/predict_hypertension" method="POST" class="diagnostic-form">
+                    <div class="input-group">
+                        <label>Age</label>
+                        <input type="number" name="Age" required placeholder="Years">
+                    </div>
+                    <div class="input-group">
+                        <label>BMI</label>
+                        <input type="number" step="0.1" name="BMI" required placeholder="kg/m²">
+                    </div>
+                    <div class="input-group">
+                        <label>Salt Intake (1-10)</label>
+                        <input type="number" name="Salt_Intake" required min="1" max="10">
+                    </div>
+                    <div class="input-group">
+                        <label>Stress Score (1-10)</label>
+                        <input type="number" name="Stress_Score" required min="1" max="10">
+                    </div>
+                    <div class="input-group">
+                        <label>Sleep (Hours)</label>
+                        <input type="number" name="Sleep_Duration" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Smoking Status</label>
+                        <select name="Smoking_Status">
+                            <option value="0">Never Smoked</option>
+                            <option value="1">Former Smoker</option>
+                            <option value="2">Current Smoker</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Exercise Level</label>
+                        <select name="Exercise_Level">
+                            <option value="0">Low (Sedentary)</option>
+                            <option value="1">Medium (Active)</option>
+                            <option value="2">High (Athlete)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Family History</label>
+                        <select name="Family_History">
+                            <option value="0">No History</option>
+                            <option value="1">Family History Present</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>BP History</label>
+                        <select name="BP_History">
+                            <option value="0">Normally Normal</option>
+                            <option value="1">Previously High</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>On Medication</label>
+                        <select name="Medication">
+                            <option value="0">No</option>
+                            <option value="1">Yes</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Run AI Diagnostic</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

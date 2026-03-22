@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Heart Disease Predictor</title>
+</head>
+<body>
+
+<h2>Heart Disease Risk Predictor</h2>
+
+<form action="/predict_heart" method="post">
+
+Age: <input type="number" name="age" required><br><br>
+
+Sex:
+<select name="sex">
+  <option value="Male">Male</option>
+  <option value="Female">Female</option>
+</select><br><br>
+
+Chest Pain:
+<select name="cp">
+  <option value="typical angina">Typical Angina</option>
+  <option value="atypical angina">Atypical Angina</option>
+  <option value="non-anginal">Non-Anginal</option>
+  <option value="asymptomatic">Asymptomatic</option>
+</select><br><br>
+
+BP: <input type="number" name="trestbps" required><br><br>
+Chol: <input type="number" name="chol" required><br><br>
+
+FBS:
+<select name="fbs">
+  <option value="True">True</option>
+  <option value="False">False</option>
+</select><br><br>
+
+RestECG:
+<select name="restecg">
+  <option value="normal">Normal</option>
+  <option value="st-t abnormality">ST-T Abnormality</option>
+  <option value="lv hypertrophy">LV Hypertrophy</option>
+</select><br><br>
+
+Max HR: <input type="number" name="thalach" required><br><br>
+
+Exang:
+<select name="exang">
+  <option value="Yes">Yes</option>
+  <option value="No">No</option>
+</select><br><br>
+
+Oldpeak: <input type="number" step="0.1" name="oldpeak" required><br><br>
+
+Slope:
+<select name="slope">
+  <option value="upsloping">Upsloping</option>
+  <option value="flat">Flat</option>
+  <option value="downsloping">Downsloping</option>
+</select><br><br>
+
+CA: <input type="number" name="ca" required><br><br>
+
+Thal:
+<select name="thal">
+  <option value="normal">Normal</option>
+  <option value="fixed defect">Fixed Defect</option>
+  <option value="reversible defect">Reversible Defect</option>
+</select><br><br>
+
+Family History:
+<select name="family_history">
+    <option value="0.15">Low</option>
+    <option value="0.35">Moderate</option>
+    <option value="0.65">High</option>
+    <option value="1.20">Very High</option>
+    <option value="2.00">Extreme</option>
+</select>
+
+<br><br>
+<button type="submit">Predict</button>
+
+</form>
+
+<hr>
+
+<!-- 🔥 RESULT SECTION -->
+
+{% if risk %}
+<div class="result-container" style="margin-top: 30px; padding: 20px; border: 2px solid #eee; border-radius: 12px; font-family: sans-serif;">
+    <h2 style="text-align: center;">Heart Health Analysis Report</h2>
+    
+    <p><strong>Overall Risk Probability:</strong> {{ risk }}%</p>
+    <div style="background-color: #e9ecef; border-radius: 20px; width: 100%; height: 30px; margin-bottom: 10px; overflow: hidden; border: 1px solid #ccc;">
+        <div style="width: {{ risk }}%; 
+                    background-color: {{ 'green' if risk < 30 else '#ffc107' if risk < 70 else '#d9534f' }}; 
+                    height: 100%; text-align: center; color: white; line-height: 30px; font-weight: bold; transition: width 1s;">
+            {{ risk }}%
+        </div>
+    </div>
+
+    <div style="padding: 10px; border-radius: 5px; text-align: center; margin-bottom: 20px;
+                background-color: {{ '#d4edda' if risk < 30 else '#fff3cd' if risk < 70 else '#f8d7da' }};
+                color: {{ '#155724' if risk < 30 else '#856404' if risk < 70 else '#721c24' }};">
+        <strong>Result:</strong> 
+        {% if risk < 30 %} Low Risk - Continue healthy lifestyle.
+        {% elif risk < 70 %} Moderate Risk - Consultation recommended.
+        {% else %} High Risk - Please consult a cardiologist immediately.
+        {% endif %}
+    </div>
+
+    <h3>Why this score? (Top Risk Drivers)</h3>
+    <p style="font-size: 0.9em; color: #666;">These factors contributed most to your specific result:</p>
+    <ul style="list-style: none; padding: 0;">
+        {% for factor, weight in explanation %}
+        <li style="padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+            <span>{{ factor.replace('_', ' ').title() }}</span>
+            <span style="font-weight: bold; color: {{ '#d9534f' if weight > 0 else '#28a745' }};">
+                {{ '↑ Increases Risk' if weight > 0 else '↓ Decreases Risk' }}
+            </span>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+
+</body>
+</html>

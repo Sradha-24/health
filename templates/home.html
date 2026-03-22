@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Medical Portal</title>
+</head>
+<body>
+    <div class="container" style="max-width: 1000px; margin-top: 50px;">
+        <h1>Welcome, {{ name }}</h1>
+        <p>Select a diagnostic module to begin your assessment.</p>
+        
+        <div class="menu-grid">
+            <a href="/diabetes" class="menu-card">
+                <h3>Diabetes Prediction</h3>
+                <p>Analyze glucose, BMI, and genetic risk factors.</p>
+                <span class="badge badge-success">Available</span>
+            </a>
+
+            <a href="/hypertension" class="menu-card">
+                <h3>Hypertension</h3>
+                <p>Analyze Blood Pressure, Salt Intake, and Lifestyle risk factors.</p>
+                <span class="badge badge-success">Available</span>
+            </a>
+
+            <a href="/heartdisease" class="menu-card">
+                <h3>HeartDisease</h3>
+                <p>Analyze Blood Pressure, Salt Intake, and Lifestyle risk factors.</p>
+                <span class="badge badge-success">Available</span>
+            </a>
+
+            <div class="menu-card" style="opacity: 0.6; cursor: not-allowed;">
+                <h3>Breast Cancer</h3>
+                <p>Tumor cell characteristic analysis.</p>
+               
+            </div>
+        </div>
+    </div>
+</body>
+</html>

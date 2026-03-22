@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | RiskPredict AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <a href="/" class="nav-logo" style="display: block; margin-bottom: 20px;">Disease Risk Prediction </a>
+            <h1>Create Account</h1>
+            <p style="color: var(--text-light); margin-bottom: 25px;">Join us to start your health assessment journey.</p>
+            
+            <form method="POST" action="/register">
+                <div class="input-group" style="margin-bottom: 15px; text-align: left;">
+                    <label for="name">Full Name</label>
+                    <input type="text" name="name" id="name" placeholder="John Doe" required>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 15px; text-align: left;">
+                    <label for="email">Email Address</label>
+                    <input type="email" name="email" id="email" placeholder="name@company.com" required>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 15px; text-align: left;">
+                    <label for="password">Password</label>
+                    <input type="password" name="password" id="password" placeholder="Min. 8 characters" required>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 20px; text-align: left;">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" name="confirm_password" id="confirm_password" placeholder="Repeat your password" required>
+                </div>
+
+                <button type="submit" class="btn-filled" style="width: 100%; border: none; cursor: pointer; padding: 12px;">Register Now</button>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Already have an account? <a href="/login">Login here</a></p>
+                <a href="/" style="font-size: 12px; color: var(--text-light);">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

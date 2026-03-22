@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | RiskPredict AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <a href="/" class="nav-logo" style="display: block; margin-bottom: 20px;">Disease Risk Prediction</a>
+            <h1>Welcome Back</h1>
+            <p style="color: var(--text-light); margin-bottom: 30px;">Please enter your details to sign in.</p>
+            
+            <form method="POST" action="/login">
+                <div class="input-group" style="margin-bottom: 20px; text-align: left;">
+                    <label>Email Address</label>
+                    <input type="text" name="username" placeholder="name@company.com" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 20px; text-align: left;">
+                    <label>Password</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-filled" style="width: 100%; border: none; cursor: pointer;">Sign In</button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="/register">Create one for free</a></p>
+                <a href="/" style="font-size: 12px; color: var(--text-light);">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
