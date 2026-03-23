@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breast Cancer Predictor</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f4f7f6;
+            --low-risk: #27ae60;
+            --mod-risk: #f1c40f;
+            --high-risk: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0; padding: 20px;
+            display: flex; justify-content: center;
+        }
+
+        .main-card {
+            background: white;
+            max-width: 750px; width: 100%;
+            padding: 40px; border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        h2 { text-align: center; color: var(--primary); margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+
+        .form-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+        }
+
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+        .input-group { display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 8px; font-size: 0.9em; color: #34495e; }
+        
+        input, select {
+            padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus { outline: none; border-color: var(--accent); }
+
+        .btn-submit {
+            grid-column: span 2; background: var(--accent); color: white;
+            border: none; padding: 15px; border-radius: 8px;
+            font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        .btn-submit:hover { background: #2980b9; }
+
+        /* Result Section - Matched to Diabetes Theme */
+        .result-card {
+            margin-top: 40px; padding: 30px; border-radius: 12px;
+            background: #fff; border: 1px solid #eee;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .progress-container { background-color: #eee; border-radius: 20px; height: 25px; margin: 20px 0; overflow: hidden; }
+        
+        .progress-bar {
+            height: 100%; text-align: center; color: white; line-height: 25px;
+            font-weight: bold; transition: width 1s ease-in-out;
+        }
+
+        .bg-low { background-color: var(--low-risk); }
+        .bg-high { background-color: var(--high-risk); }
+
+        .badge { display: inline-block; padding: 8px 20px; border-radius: 50px; font-weight: bold; margin-bottom: 20px; }
+        .text-low { background-color: #d4edda; color: #155724; }
+        .text-high { background-color: #f8d7da; color: #721c24; }
+
+        .factor-list { list-style: none; padding: 0; }
+        .factor-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f9f9f9; }
+        .risk-up { color: var(--high-risk); font-weight: bold; }
+        .risk-down { color: var(--low-risk); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="main-card">
+    <h2>Breast Cancer Risk Predictor</h2>
+
+    <form action="/predict_cancer" method="post" class="form-grid">
+        <div class="input-group">
+            <label>Age</label>
+            <input type="number" name="age" required>
+        </div>
+
+        <div class="input-group">
+            <label>Tumor Size (cm)</label>
+            <input type="number" name="tumor_size" step="0.1" required>
+        </div>
+
+        <div class="input-group">
+            <label>Menopause</label>
+            <select name="menopause">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Family History</label>
+            <select name="history">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Involved Nodes</label>
+            <input type="number" name="inv_nodes" required>
+        </div>
+
+        <div class="input-group">
+            <label>Metastasis</label>
+            <select name="metastasis">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Breast Side</label>
+            <select name="breast">
+                <option value="Left">Left</option>
+                <option value="Right">Right</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Quadrant Location</label>
+            <select name="quadrant">
+                <option value="Upper outer">Upper Outer</option>
+                <option value="Upper inner">Upper Inner</option>
+                <option value="Lower outer">Lower Outer</option>
+                <option value="Lower inner">Lower Inner</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn-submit">Predict Risk</button>
+    </form>
+
+    {% if risk %}
+    {% set risk_cat = 'high' if risk > 50 else 'low' %}
+    <div class="result-card">
+        <div style="text-align: center;">
+            <div class="badge text-{{ risk_cat }}">
+                {{ 'Malignant Risk' if risk > 50 else 'Benign Risk' }} Profile
+            </div>
+            <h3 style="margin: 0;">Probability of Malignancy: {{ risk }}%</h3>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar bg-{{ risk_cat }}" style="--w: {{ risk }}%; width: var(--w);">
+                {{ risk }}%
+            </div>
+        </div>
+
+        <h4>Contributing Factors:</h4>
+        <ul class="factor-list">
+            {% for factor, weight in explanation %}
+            <li class="factor-item">
+                <span>{{ factor.replace('_', ' ').title() }}</span>
+                <span class="{% if weight > 0 %}risk-up{% else %}risk-down{% endif %}">
+                    {{ '↑ Increases Risk' if weight > 0 else '↓ Decreases Risk' }}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>
