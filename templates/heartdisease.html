@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Health Predictor</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f8f9fa;
+            --low-risk: #27ae60;
+            --mod-risk: #f1c40f;
+            --high-risk: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0; padding: 20px;
+            display: flex; justify-content: center;
+        }
+
+        .main-card {
+            background: white;
+            max-width: 800px; width: 100%;
+            padding: 40px; border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h2 { text-align: center; color: var(--primary); margin-bottom: 30px; }
+
+        .form-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+        }
+
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+        .input-group { display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 5px; font-size: 0.9em; color: #555; }
+        
+        input, select {
+            padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;
+        }
+
+        .btn-submit {
+            grid-column: span 2; background: var(--accent); color: white;
+            border: none; padding: 15px; border-radius: 8px;
+            font-weight: bold; cursor: pointer; margin-top: 20px;
+        }
+
+        /* Result Section Styles */
+        .result-box { margin-top: 40px; padding: 25px; border: 1px solid #eee; border-radius: 12px; }
+        
+        .risk-bar-bg { background: #eee; border-radius: 20px; height: 25px; margin: 20px 0; overflow: hidden; }
+        .risk-bar-fill { height: 100%; text-align: center; line-height: 25px; color: white; font-weight: bold; transition: width 1s; }
+        
+        .bg-low { background-color: var(--low-risk); }
+        .bg-mod { background-color: var(--mod-risk); }
+        .bg-high { background-color: var(--high-risk); }
+
+        .text-low { color: #155724; background: #d4edda; }
+        .text-mod { color: #856404; background: #fff3cd; }
+        .text-high { color: #721c24; background: #f8d7da; }
+
+        .badge { padding: 10px 20px; border-radius: 50px; display: inline-block; font-weight: bold; margin-bottom: 15px; }
+        
+        .factor-list { list-style: none; padding: 0; }
+        .factor-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f4f4f4; }
+
+        /* FIX: These classes handle the colors that were causing errors */
+        .risk-up { color: var(--high-risk); font-weight: bold; }
+        .risk-down { color: var(--low-risk); font-weight: bold; }
+    </style>
+</head>
+<script>
+    const bar = document.getElementById('riskBar');
+    if (bar) {
+        const targetWidth = bar.getAttribute('data-width');
+        bar.style.width = targetWidth + '%';
+    }
+</script>
+<body>
+
+<div class="main-card">
+    <h2>Heart Disease Risk Predictor</h2>
+
+    <form action="/predict_heart" method="post" class="form-grid">
+        <div class="input-group">
+            <label>Age</label>
+            <input type="number" name="age" required>
+        </div>
+        <div class="input-group">
+            <label>Sex</label>
+            <select name="sex">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Chest Pain Type</label>
+            <select name="cp">
+                <option value="typical angina">Typical Angina</option>
+                <option value="atypical angina">Atypical Angina</option>
+                <option value="non-anginal">Non-Anginal</option>
+                <option value="asymptomatic">Asymptomatic</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Blood Pressure</label>
+            <input type="number" name="trestbps" required>
+        </div>
+        <div class="input-group">
+            <label>Cholesterol</label>
+            <input type="number" name="chol" required>
+        </div>
+        <div class="input-group">
+            <label>Fasting Blood Sugar</label>
+            <select name="fbs">
+                <option value="False">False</option>
+                <option value="True">True</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Rest ECG</label>
+            <select name="restecg">
+                <option value="normal">Normal</option>
+                <option value="st-t abnormality">ST-T Abnormality</option>
+                <option value="lv hypertrophy">LV Hypertrophy</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Max Heart Rate</label>
+            <input type="number" name="thalach" required>
+        </div>
+        <div class="input-group">
+            <label>Exercise Angina</label>
+            <select name="exang">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Oldpeak</label>
+            <input type="number" step="0.1" name="oldpeak" required>
+        </div>
+        <div class="input-group">
+            <label>ST Slope</label>
+            <select name="slope">
+                <option value="upsloping">Upsloping</option>
+                <option value="flat">Flat</option>
+                <option value="downsloping">Downsloping</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Vessels (CA)</label>
+            <input type="number" name="ca" required>
+        </div>
+        <div class="input-group">
+            <label>Thal Result</label>
+            <select name="thal">
+                <option value="normal">Normal</option>
+                <option value="fixed defect">Fixed Defect</option>
+                <option value="reversible defect">Reversible Defect</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label>Family History</label>
+            <select name="family_history">
+                <option value="0.15">Low</option>
+                <option value="0.35">Moderate</option>
+                <option value="0.65">High</option>
+                <option value="2.00">Extreme</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn-submit">Generate Risk Report</button>
+    </form>
+
+    {% if risk %}
+    <div class="result-box">
+        <h3 style="text-align: center;">Heart Health Report</h3>
+        
+        {% set risk_class = 'low' if risk < 30 else 'mod' if risk < 70 else 'high' %}
+        
+        <div style="text-align: center;">
+            <span class="badge text-{{ risk_class }}">
+                {% if risk < 30 %} Low Risk Profile
+                {% elif risk < 70 %} Moderate Risk Profile
+                {% else %} High Risk Profile
+                {% endif %}
+            </span>
+        </div>
+
+        <div class="risk-bar-bg">
+            <div id="riskBar" class="risk-bar-fill bg-{{ risk_class }}" data-width="{{ risk }}">
+    {{ risk }}%
+</div>
+        </div>
+
+        <h4>Top Influencing Factors</h4>
+        <ul class="factor-list">
+            {% for factor, weight in explanation %}
+            <li class="factor-item">
+                <span>{{ factor.replace('_', ' ').title() }}</span>
+                
+                <span class="{% if weight > 0 %}risk-up{% else %}risk-down{% endif %}">
+                    {{ '↑ Increases Risk' if weight > 0 else '↓ Protective' }}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+</body>
+</html>
