@@ -283,3 +283,24 @@ td { padding: 15px 12px; border-bottom: 1px solid #f8f9fc; }
 .low-risk {
     background-color: #5cb85c;
 }
+
+/* Heart Disease */
+
+.risk-up {
+    color: #e74c3c; /* Red */
+    font-weight: bold;
+}
+
+.risk-down {
+    color: #27ae60; /* Green */
+    font-weight: bold;
+}
+
+.risk-bar-fill {
+    height: 100%;
+    text-align: center;
+    line-height: 25px;
+    color: white;
+    font-weight: bold;
+    transition: width 1s;
+}
