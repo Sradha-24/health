@@ -77,7 +77,17 @@ hyper_explainer = lime.lime_tabular.LimeTabularExplainer(
     mode='classification'
 )
 
+# --- 1. Load the Breast Cancer Model (at the top of app.py) ---
+cancer_model = joblib.load('models/cancer_model.pkl')
+cancer_features = joblib.load('models/cancer_features.pkl')
+cancer_sample = pd.read_csv('models/cancer_training_sample.csv')
 
+cancer_explainer = lime.lime_tabular.LimeTabularExplainer(
+    training_data=cancer_sample.values,
+    feature_names=cancer_features,
+    class_names=['Benign', 'Malignant'],
+    mode='classification'
+)
 
 app=Flask(__name__)
 
@@ -413,6 +423,52 @@ def predict_heart():
 
     return render_template("heartdisease.html", risk=risk, explanation=explanation)
       
-        
+@app.route('/breastcancer')
+def breastcancer():
+    if 'user_email' not in session:
+        return redirect('/login')
+    return render_template('breast_cancer.html',name=session['user_name'])
+
+# --- 2. Create the Predict Route ---
+@app.route('/predict_cancer', methods=['POST'])
+def predict_cancer():
+    # Gather form data
+    age = float(request.form.get('age'))
+    menopause = int(request.form.get('menopause'))
+    size = float(request.form.get('tumor_size'))
+    nodes = int(request.form.get('inv_nodes'))
+    metastasis = int(request.form.get('metastasis'))
+    history = int(request.form.get('history'))
+    breast = request.form.get('breast')
+    quadrant = request.form.get('quadrant')
+
+    # Create empty row with all 12 feature columns
+    input_df = pd.DataFrame(np.zeros((1, len(cancer_features))), columns=cancer_features)
+
+    # Fill Numeric Columns
+    input_df.at[0, 'Age'] = age
+    input_df.at[0, 'Menopause'] = menopause
+    input_df.at[0, 'Tumor Size (cm)'] = size
+    input_df.at[0, 'Inv-Nodes'] = nodes
+    input_df.at[0, 'Metastasis'] = metastasis
+    input_df.at[0, 'History'] = history
+
+    # Fill Categorical Columns (One-Hot Encoding)
+    if f"Breast_{breast}" in input_df.columns:
+        input_df.at[0, f"Breast_{breast}"] = 1
+    if f"Breast Quadrant_{quadrant}" in input_df.columns:
+        input_df.at[0, f"Breast Quadrant_{quadrant}"] = 1
+
+    # Predict
+    prob = cancer_model.predict_proba(input_df.values)[0][1]
+    risk = round(prob * 100, 2)
+
+    # Explanation
+    exp = cancer_explainer.explain_instance(input_df.values[0], cancer_model.predict_proba)
+    explanation = exp.as_list()
+
+    return render_template("breast_cancer.html", risk=risk, explanation=explanation)
+
+
 if __name__=="__main__":
     app.run(debug=True)
