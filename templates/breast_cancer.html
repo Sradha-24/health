@@ -156,6 +156,13 @@
                 {{ 'Malignant Risk' if risk > 50 else 'Benign Risk' }} Profile
             </div>
             <h3 style="margin: 0;">Probability of Malignancy: {{ risk }}%</h3>
+            <p style="margin-top:10px; font-size: 1em; color:#555;">
+               Without Family History: <strong>{{ risk_without }}%</strong>
+            </p>
+            <p style="margin-top:5px; font-size: 0.95em; color:#e74c3c; font-weight: 500;">
+              {{ hereditary_msg }}
+            </p>
+
         </div>
 
         <div class="progress-container">
@@ -176,6 +183,13 @@
             {% endfor %}
         </ul>
     </div>
+    <div style="text-align:center; margin-top:20px;">
+    <a href="{{ url_for('static', filename=report_file) }}" 
+       style="background:#2c3e50; color:white; padding:10px 20px; border-radius:8px; text-decoration:none;">
+       Download Report
+    </a>
+</div>
+
     {% endif %}
 </div>
 
