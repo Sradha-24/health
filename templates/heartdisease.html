@@ -73,13 +73,7 @@
         .risk-down { color: var(--low-risk); font-weight: bold; }
     </style>
 </head>
-<script>
-    const bar = document.getElementById('riskBar');
-    if (bar) {
-        const targetWidth = bar.getAttribute('data-width');
-        bar.style.width = targetWidth + '%';
-    }
-</script>
+
 <body>
 
 <div class="main-card">
@@ -167,10 +161,9 @@
         <div class="input-group">
             <label>Family History</label>
             <select name="family_history">
-                <option value="0.15">Low</option>
-                <option value="0.35">Moderate</option>
-                <option value="0.65">High</option>
-                <option value="2.00">Extreme</option>
+                <option value="0">No family history</option>
+                <option value="1">Second-degree (grandparents, uncle, aunt)</option>
+                <option value="2">First-degree (parents, siblings)</option>
             </select>
         </div>
 
@@ -197,6 +190,19 @@
     {{ risk }}%
 </div>
         </div>
+        <!-- 🔥 NEW: Comparison Section -->
+<div style="margin-top: 15px; text-align: center;">
+    <p style="color:#2c3e50;">
+    <strong>Without Family History:</strong> {{ risk_without }}%
+</p>
+
+</div>
+
+        <!-- 🔥 NEW: Human-readable explanation -->
+<p style="margin-top: 15px; font-size: 15px;">
+    <strong>Explanation:</strong> {{ explanation_text }}
+</p>
+
 
         <h4>Top Influencing Factors</h4>
         <ul class="factor-list">
@@ -211,8 +217,21 @@
             {% endfor %}
         </ul>
     </div>
-    {% endif %}
+    <div style="text-align:center; margin-top:20px;">
+    <a href="{{ url_for('static', filename=report_file) }}" 
+       style="background:#2c3e50; color:white; padding:12px 25px; border-radius:25px; text-decoration:none; font-weight:bold;">
+       ❤️ Download Heart Report
+    </a>
 </div>
 
+    {% endif %}
+</div>
+<script>
+    const bar = document.getElementById('riskBar');
+    if (bar) {
+        const targetWidth = bar.getAttribute('data-width');
+        bar.style.width = targetWidth + '%';
+    }
+</script>
 </body>
 </html>
