@@ -12,6 +12,73 @@ import io
 import base64
 import joblib
 from datetime import datetime
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+
+def generate_cancer_report(data, filename="breast_cancer_report.pdf"):
+    doc = SimpleDocTemplate(f"static/{filename}")
+    styles = getSampleStyleSheet()
+    content = []
+
+    content.append(Paragraph("Breast Cancer Risk Report", styles['Title']))
+    content.append(Spacer(1, 20))
+
+    for key, value in data.items():
+        content.append(Paragraph(f"<b>{key}:</b> {value}", styles['Normal']))
+        content.append(Spacer(1, 10))
+
+    doc.build(content)
+
+    return filename
+
+def generate_heart_report(data, filename="heart_report.pdf"):
+    doc = SimpleDocTemplate(f"static/{filename}")
+    styles = getSampleStyleSheet()
+    content = []
+
+    content.append(Paragraph("Heart Disease Risk Report", styles['Title']))
+    content.append(Spacer(1, 20))
+
+    for key, value in data.items():
+        content.append(Paragraph(f"<b>{key}:</b> {value}", styles['Normal']))
+        content.append(Spacer(1, 10))
+
+    doc.build(content)
+
+    return filename
+
+def generate_hypertension_report(data, filename="hypertension_report.pdf"):
+    doc = SimpleDocTemplate(f"static/{filename}")
+    styles = getSampleStyleSheet()
+    content = []
+
+    content.append(Paragraph("Hypertension Risk Report", styles['Title']))
+    content.append(Spacer(1, 20))
+
+    for key, value in data.items():
+        content.append(Paragraph(f"<b>{key}:</b> {value}", styles['Normal']))
+        content.append(Spacer(1, 10))
+
+    doc.build(content)
+
+    return filename
+
+def generate_diabetes_report(data,filename="diabetes_report.pdf"):
+
+    doc = SimpleDocTemplate(f"static/{filename}")
+    styles = getSampleStyleSheet()
+    content = []
+
+    content.append(Paragraph("Diabetes Risk Report", styles['Title']))
+    content.append(Spacer(1, 20))
+
+    for key, value in data.items():
+        content.append(Paragraph(f"<b>{key}:</b> {value}", styles['Normal']))
+        content.append(Spacer(1, 10))
+
+    doc.build(content)
+
+    return filename
 
 
 #Load the models
@@ -243,13 +310,35 @@ def predict():
         ).fetchall()
         conn.close()
 
+        
+        report_data = {
+            "Patient Name": session['user_name'],
+
+            "Age": age,
+            "Weight (kg)": weight,
+            "Height (cm)": request.form.get('height'),
+            "BMI": bmi,
+
+            "Glucose (mg/dL)": glucose,
+            "Blood Pressure (mm Hg)": bp,
+
+            "Smoking History": request.form.get('smoking_history'),
+            "Family Diabetes History": pedigree,
+
+            "Prediction": result,
+            "Final Risk (%)": risk_score
+            }
+
+        report_file = generate_diabetes_report(report_data)
+
         return render_template('dashboard.html', 
                                name=session['user_name'], 
                                history=history, 
                                prediction=result, 
                                score=risk_score, 
                                color=bar_color, 
-                               explanation_chart=lime_chart)
+                               explanation_chart=lime_chart,
+                               report_file=report_file )
 
     except Exception as e:
         return f"Error: {str(e)}"
@@ -293,6 +382,16 @@ def predict_hypertension():
     try:
         # 1. Collect inputs in the EXACT order your XGBoost model expects
         # Age, Salt_Intake, Stress_Score, BP_History, Sleep_Duration, BMI, Medication, Family_History, Exercise_Level, Smoking_Status
+        family_input = int(request.form.get('Family_History'))
+
+        family_map = {
+           0: 0.0,
+           1: 0.5,
+           2: 1.0
+        }
+
+        family_risk = family_map.get(family_input, 0)
+        
         features = [
             float(request.form.get('Age')),
             float(request.form.get('Salt_Intake')),
@@ -301,7 +400,7 @@ def predict_hypertension():
             float(request.form.get('Sleep_Duration')),
             float(request.form.get('BMI')),
             float(request.form.get('Medication')),
-            float(request.form.get('Family_History')),
+            family_risk,
             float(request.form.get('Exercise_Level')),
             float(request.form.get('Smoking_Status'))
         ]
@@ -313,6 +412,12 @@ def predict_hypertension():
         prediction=hyper_model.predict(final_features)[0]
         probability = hyper_model.predict_proba(final_features)[0][1]
 
+        features_no_fam = features.copy()
+        features_no_fam[7] = 0  # index of Family_History
+
+        final_features_no_fam = np.array(features_no_fam).reshape(1, -1)
+
+        prob_without = hyper_model.predict_proba(final_features_no_fam)[0][1]
         # 3. Generate LIME Explanation
         # hyper_explainer should be initialized at the top of your app.py
         exp = hyper_explainer.explain_instance(
@@ -330,7 +435,14 @@ def predict_hypertension():
 
         # 5. Format Results
         result_text = "Positive (Hypertensive Risk)" if prediction == 1 else "Negative (Healthy)"
-        risk_score = round(float(probability) * 100, 2)
+        if probability < 0.7:
+            adjusted_prob = probability + (family_risk * 0.25)
+        else:
+            adjusted_prob = probability + (family_risk * 0.05)
+        adjusted_prob = min(adjusted_prob, 1)
+
+        risk_score = round(adjusted_prob * 100, 2)
+        risk_without = round(prob_without * 100, 2)
         color = "#d9534f" if risk_score > 50 else "#5cb85c"
 
         # 6. Save to the NEW hypertension_history table
@@ -351,6 +463,35 @@ def predict_hypertension():
         conn.commit()
         conn.close()
 
+        difference = risk_score - risk_without
+
+        if difference > 10:
+           hereditary_msg = f"Family history significantly increases your hypertension risk by {round(difference,2)}%."
+        elif difference > 3:
+           hereditary_msg = f"Family history moderately increases your risk by {round(difference,2)}%."
+        else:
+           hereditary_msg = "Family history has limited impact because other clinical factors dominate the prediction."
+
+        
+        report_data = {
+         "Patient Name": session['user_name'],
+         "Age": request.form.get('Age'),
+         "BMI": request.form.get('BMI'),
+         "Salt Intake": request.form.get('Salt_Intake'),
+         "Stress Score": request.form.get('Stress_Score'),
+         "Sleep Duration": request.form.get('Sleep_Duration'),
+         "Smoking Status": request.form.get('Smoking_Status'),
+         "Exercise Level": request.form.get('Exercise_Level'),
+         "Family History": request.form.get('Family_History'),
+         "BP History": request.form.get('BP_History'),
+         "Medication": request.form.get('Medication'),
+         "Final Risk (%)": risk_score,
+         "Without Family History (%)": risk_without,
+         "Result": result_text
+       }
+
+        report_file = generate_hypertension_report(report_data)
+
         # 7. Send to result.html (reusing your existing results page)
         return render_template('hypertension.html', 
                            name=session['user_name'],
@@ -359,6 +500,9 @@ def predict_hypertension():
                            score=risk_score, 
                            color=color, 
                            explanation_chart=explanation_chart,
+                           risk_without=risk_without,
+                           hereditary_msg=hereditary_msg,  
+                           report_file=report_file,
                            show_result=True)
     except Exception as e:
         return f"Error during Hypertension prediction: {str(e)}"
@@ -369,10 +513,22 @@ def heartdisease():
         return redirect('/login')
     return render_template('heartdisease.html',name=session['user_name'])
 
+def get_family_risk_score(level):
+    if level == 2:
+        return 0.6   # High hereditary risk (parents/siblings)
+    elif level == 1:
+        return 0.3   # Medium risk (grandparents etc.)
+    else:
+        return 0.0   # No risk
+
 
 @app.route('/predict_heart', methods=['POST'])
 def predict_heart():
     # Base numeric input
+
+    family_history_level = int(request.form['family_history'])
+    family_risk = get_family_risk_score(family_history_level)
+
     input_data = {
         'age': float(request.form['age']),
         'trestbps': float(request.form['trestbps']),
@@ -380,8 +536,11 @@ def predict_heart():
         'thalach': float(request.form['thalach']),
         'oldpeak': float(request.form['oldpeak']),
         'ca': float(request.form['ca']),
-        'family_history': float(request.form['family_history'])
+        'family_history': family_risk
+  
     }
+
+    
 
     # Create empty feature vector
     input_df = pd.DataFrame(np.zeros((1, len(features))), columns=features)
@@ -409,8 +568,20 @@ def predict_heart():
     scaled = np.nan_to_num(scaled)
 
     # Predict
-    prob = heart_model.predict_proba(scaled)[0][1]
-    risk = round(prob * 100, 2)
+    prob_with = heart_model.predict_proba(scaled)[0][1]
+
+    input_df_no_family = input_df.copy()
+    input_df_no_family['family_history'] = 0
+
+    scaled_no_family = scaler.transform(input_df_no_family)
+    scaled_no_family = np.nan_to_num(scaled_no_family)
+
+    prob_without = heart_model.predict_proba(scaled_no_family)[0][1]
+
+    risk_with = round(prob_with * 100, 2)
+    risk_without = round(prob_without * 100, 2)
+
+    risk = risk_with
     print("NaN check:", np.isnan(scaled).any())
 
     # 2. LIME (Explainer needs un-scaled row + our wrapper)
@@ -419,9 +590,45 @@ def predict_heart():
         predict_fn=heart_predict_wrapper # Uses the wrapper we made above
     )
 
+    top_features = exp.as_list()[:3]
+
     explanation = exp.as_list()[:5]
 
-    return render_template("heartdisease.html", risk=risk, explanation=explanation)
+    explanation_text = "Key factors affecting your risk are: "
+
+    for feature, value in top_features:
+        explanation_text += f"{feature}, "
+
+    explanation_text = explanation_text.rstrip(", ") + "."
+
+    if family_risk > 0:
+        explanation_text += " Family history has a significant influence on the prediction."
+    
+    difference = risk - risk_without
+
+    if difference > 15:
+      family_msg = f"Family history significantly increases heart disease risk by {round(difference,2)}%."
+    elif difference > 5:
+      family_msg = f"Family history moderately increases risk by {round(difference,2)}%."
+    else:
+      family_msg = "Family history has minimal impact compared to other clinical factors."
+
+    report_data = {
+    "Age": input_data['age'],
+    "Resting BP": input_data['trestbps'],
+    "Cholesterol": input_data['chol'],
+    "Max Heart Rate": input_data['thalach'],
+    "Oldpeak": input_data['oldpeak'],
+    "Number of Major Vessels": input_data['ca'],
+    "Family History Impact": family_msg,
+    "Family History": family_history_level,
+    "Final Risk (%)": risk,
+    "Without Family History (%)": risk_without
+}
+
+
+    report_file = generate_heart_report(report_data)
+    return render_template("heartdisease.html", risk=risk,risk_without=risk_without, explanation=explanation,explanation_text=explanation_text,report_file=report_file)
       
 @app.route('/breastcancer')
 def breastcancer():
@@ -438,10 +645,17 @@ def predict_cancer():
     size = float(request.form.get('tumor_size'))
     nodes = int(request.form.get('inv_nodes'))
     metastasis = int(request.form.get('metastasis'))
-    history = int(request.form.get('history'))
+    history_input= int(request.form.get('history'))
     breast = request.form.get('breast')
     quadrant = request.form.get('quadrant')
 
+    family_map = {
+    0: 0.0,
+    1: 0.7,
+    2: 1.5
+    }
+
+    family_risk = family_map.get(history_input, 0)
     # Create empty row with all 12 feature columns
     input_df = pd.DataFrame(np.zeros((1, len(cancer_features))), columns=cancer_features)
 
@@ -451,7 +665,7 @@ def predict_cancer():
     input_df.at[0, 'Tumor Size (cm)'] = size
     input_df.at[0, 'Inv-Nodes'] = nodes
     input_df.at[0, 'Metastasis'] = metastasis
-    input_df.at[0, 'History'] = history
+    input_df.at[0, 'History'] = family_risk
 
     # Fill Categorical Columns (One-Hot Encoding)
     if f"Breast_{breast}" in input_df.columns:
@@ -461,13 +675,42 @@ def predict_cancer():
 
     # Predict
     prob = cancer_model.predict_proba(input_df.values)[0][1]
-    risk = round(prob * 100, 2)
+
+    input_df_no_fam = input_df.copy()
+    input_df_no_fam.at[0, 'History'] = 0
+
+    prob_without = cancer_model.predict_proba(input_df_no_fam.values)[0][1]
+    adjusted_prob = prob + (family_risk * 0.25)
+    adjusted_prob = min(adjusted_prob, 1)
+
+    risk = round(adjusted_prob * 100, 2)
+    risk_without = round(prob_without * 100, 2)
 
     # Explanation
     exp = cancer_explainer.explain_instance(input_df.values[0], cancer_model.predict_proba)
-    explanation = exp.as_list()
+    explanation = exp.as_list()[:5]
 
-    return render_template("breast_cancer.html", risk=risk, explanation=explanation)
+    difference = risk - risk_without
+
+    if difference > 20:
+      hereditary_msg = f"Family history significantly increases breast cancer risk by {round(difference,2)}%."
+    elif difference > 8:
+      hereditary_msg = f"Family history moderately increases risk by {round(difference,2)}%."
+    else:
+      hereditary_msg = "Genetic influence is present but other tumor characteristics dominate."
+    report_data = {
+    "Age": age,
+    "Tumor Size": size,
+    "Menopause": menopause,
+    "Involved Nodes": nodes,
+    "Metastasis": metastasis,
+    "Family History Impact": hereditary_msg,
+    "Final Risk (%)": risk,
+    "Without Family History (%)": risk_without
+    }
+    report_file = generate_cancer_report(report_data)
+
+    return render_template("breast_cancer.html", risk=risk,risk_without=risk_without,hereditary_msg=hereditary_msg, explanation=explanation,report_file=report_file)
 
 
 if __name__=="__main__":
