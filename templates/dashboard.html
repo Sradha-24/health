@@ -65,7 +65,13 @@
                         <img src="{{ explanation_chart }}" style="width: 100%;">
                     </div>
                     <div style="margin-top: 20px;">
-                        <button onclick="window.print()" class="btn-submit" style="width: auto; padding: 10px 30px;">Download Report</button>
+                        {% if report_file %}
+                        <a href="{{ url_for('static', filename=report_file) }}" 
+                            class="btn-submit"
+                             style="width: auto; padding: 10px 30px; display:inline-block;">
+                            🩸 Download Report
+                        </a>
+                         {% endif %}
                         <a href="/dashboard" style="display:block; margin-top: 10px; font-size: 12px; color: #4e73df; text-decoration: none;">Perform New Scan</a>
                     </div>
                 </div>
